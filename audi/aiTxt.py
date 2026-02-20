@@ -1,4 +1,9 @@
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
+
 import torch
+from sintAudi import *
 from transformers import AutoModelForCausalLM, AutoTokenizer#, BitsAndBytesConfig
 
 model = None
@@ -19,10 +24,14 @@ async def loadModel():
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        # quantization_config=bnb_config,
-        #torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-        device_map="auto"
+        dtype=torch.float32,
+        device_map=None
     )
+
+    model.to("cpu")
+    model.eval()
+    model = torch.compile(model)
+    torch.set_num_threads(os.cpu_count())
 
     print("Load model")
 
@@ -41,10 +50,10 @@ async def useBot(msg):
 
     inputs = tokenizer(text, return_tensors="pt").to(model.device)
 
-    with torch.no_grad():
+    with torch.inference_mode():
         outputs = model.generate(
             **inputs,
-            max_new_tokens=128,
+            max_new_tokens=96,
             temperature=0.7,
             do_sample=True
         )
@@ -61,7 +70,8 @@ if __name__ == "__main__":
     import asyncio
 
     async def test():
+        sp = Voice()
         await loadModel()
-        print(await useBot("Расскажи о Пушкине"))
+        sp.say(await useBot("Расскажи о Пушкине"))
 
     asyncio.run(test())

@@ -3,9 +3,7 @@ import numpy as np
 from ultralytics import YOLO
 import asyncio
 
-# Важно: используем модель сегментации
 model = YOLO('yolov8n-seg.pt')
-
 
 async def startCam():
     cap = cv2.VideoCapture(0)
