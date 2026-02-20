@@ -13,6 +13,8 @@ async def start():
     cam_thread = threading.Thread(target=startCam, daemon=True)
     cam_thread.start()
 
+
+
     # await mdlIni()
     # lMt = threading.Thread(target=loadModel, daemon=True)
     # lMt.start()
