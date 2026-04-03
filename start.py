@@ -8,13 +8,14 @@ from cam import startCam
 from audi.au2Txt import *
 from audi.aiTxt import *
 from listenCmd import listC
+from PFBP import *
 
 async def start():
-    await asyncio.to_thread(loadModel)
-    cam_thread = threading.Thread(target=startCam, daemon=True)
-    cam_thread.start()
-
-    listC()
+    # await asyncio.to_thread(loadModel)
+    # cam_thread = threading.Thread(target=startCam, daemon=True)
+    # cam_thread.start()
+    #
+    # listC()
 
     # await mdlIni()
     # lMt = threading.Thread(target=loadModel, daemon=True)
@@ -22,5 +23,8 @@ async def start():
     # await loadModel()
 
     # await strLst()
+
+    move(True, True)
+    speed(100)
 
 asyncio.run(start())
