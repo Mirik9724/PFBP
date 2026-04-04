@@ -4,9 +4,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(__file__))
 
-from cam import startCam
-from audi.au2Txt import *
-from audi.aiTxt import *
+# from cam import startCam
+# from audi.au2Txt import *
+# from audi.aiTxt import *
 from listenCmd import listC
 from PFBP import *
 
@@ -15,7 +15,7 @@ async def start():
     # cam_thread = threading.Thread(target=startCam, daemon=True)
     # cam_thread.start()
     #
-    # listC()
+    listC()
 
     # await mdlIni()
     # lMt = threading.Thread(target=loadModel, daemon=True)
