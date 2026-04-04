@@ -4,7 +4,7 @@ gp.setwarnings(False)
 gp.setmode(gp.BCM)
 
 for i in (23,24,17,27, 5, 6):
-    gp.setmode(gp.OUT)
+    gp.setup(gp.OUT)
 
 lSp = gp.PWM(5, 100)
 rSp = gp.PWM(6, 100)
