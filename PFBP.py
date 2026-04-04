@@ -1,7 +1,10 @@
 import RPi.GPIO as gp
 
+gp.setwarnings(False)
+gp.setmode(gp.BCM)
+
 for i in (23,24,17,27, 5, 6):
-    gp.setup(i, gp.IN)
+    gp.setmode(gp.OUT)
 
 lSp = gp.PWM(5, 100)
 rSp = gp.PWM(6, 100)
@@ -9,8 +12,9 @@ rSp.start(0)
 lSp.start(0)
 
 def speed(sp):
-    lSp.ChangeDutyCycle(sp)
-    rSp.ChangeDutyCycle(sp)
+    val = max(0, min(100, sp))
+    lSp.ChangeDutyCycle(val)
+    rSp.ChangeDutyCycle(val)
 
 def move(Lft, Rgt):
     if Lft == True:
