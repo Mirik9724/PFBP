@@ -27,4 +27,7 @@ async def start():
     move(True, True)
     speed(100)
 
+    while True:
+        await asyncio.sleep(1)
+
 asyncio.run(start())
