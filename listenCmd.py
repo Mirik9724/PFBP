@@ -1,5 +1,6 @@
 import serial
 from PFBP import *
+import asyncio
 
 # Подключение к Serial порту (тот же /dev/rfcomm0)
 ser = serial.Serial('/dev/rfcomm0', 9600)
@@ -7,27 +8,33 @@ ser = serial.Serial('/dev/rfcomm0', 9600)
 print("Ожидаю команды...")
 
 async def listC():
+    if not ser: return  # Если порт не открылся, выходим
+
     try:
         while True:
             if ser.in_waiting > 0:
-                data = ser.read(1)  # читаем 1 байт
+                # Декодируем байты в строку, чтобы сравнение работало
+                data = ser.read(1).decode('utf-8')
+
                 if data == 'W':
-                    move(True, True);
+                    move(True, True)
                     speed(80)
                 elif data == 'S':
-                    move(False, False);
+                    move(False, False)
                     speed(80)
                 elif data == 'A':
-                    move(False, True);
+                    move(False, True)
                     speed(60)
                 elif data == 'D':
-                    move(True, False);
+                    move(True, False)
                     speed(60)
                 elif data == 'X' or data == 'Z':
                     stop()
 
+            await asyncio.sleep(0.01)
 
-except KeyboardInterrupt:
-    print("Завершение работы")
+    except KeyboardInterrupt:
+        print("Завершение работы")
 
-ser.close()
+    finally:
+        ser.close()
