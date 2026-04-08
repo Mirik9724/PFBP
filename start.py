@@ -25,9 +25,13 @@ async def start():
     # await strLst()
 
     move(True, True)
-    speed(100)
+    speed(10)
+    await asyncio.sleep(1)
 
-    while True:
-        await asyncio.sleep(1)
+    move(False, False)
+    speed(10)
+    await asyncio.sleep(1)
+
+    stop()
 
 asyncio.run(start())
