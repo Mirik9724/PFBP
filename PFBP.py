@@ -10,7 +10,6 @@ lSp = gp.PWM(5, 100)
 rSp = gp.PWM(6, 100)
 rSp.start(0)
 lSp.start(0)
-print("elpipi")
 
 def speed(sp):
     val = max(0, min(100, sp))
