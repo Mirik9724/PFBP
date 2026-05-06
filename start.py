@@ -5,7 +5,6 @@ import os
 
 sys.path.append(os.path.dirname(__file__))
 
-# from cam import startCam
 # from audi.au2Txt import *
 # from audi.aiTxt import *
 # from listenCmd import listC
@@ -26,14 +25,13 @@ async def start():
 
     # await strLst()
 
-    move(True, True)
-    speed(50)
-    await asyncio.sleep(1)
-
-    move(False, False)
-    speed(50)
-    await asyncio.sleep(1)
-
-    stop()
+    # move(True, True)
+    # speed(50)
+    # await asyncio.sleep(1)
+    #
+    # move(False, False)
+    # speed(50)
+    # await asyncio.sleep(1)
+    # stop()
 
 asyncio.run(start())
