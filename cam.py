@@ -5,7 +5,7 @@ import asyncio
 net = cv2.dnn.readNetFromONNX("yolov8n-seg.onnx")
 
 async def startCam():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2)
     colors = np.random.randint(0, 255, size=(80, 3), dtype="uint8")
 
     while True:
