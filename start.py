@@ -33,5 +33,7 @@ async def start():
     # speed(50)
     # await asyncio.sleep(1)
     # stop()
+    while cam_thread.is_alive():
+        await asyncio.sleep(1)
 
 asyncio.run(start())
