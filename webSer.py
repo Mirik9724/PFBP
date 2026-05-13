@@ -1,16 +1,12 @@
-from fastapi import FastAPI
-import uvicorn
-import sys, os
 
-from fastapi.openapi.models import Response
-
-import cam
-
+import uvicorn, sys, os
+from fastapi import FastAPI, Response
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 
 sys.path.append(os.path.dirname(__file__))
 from PFBP import *
+import cam
 
 app = FastAPI()
 
