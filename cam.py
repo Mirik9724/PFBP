@@ -4,7 +4,6 @@ import asyncio
 import sys
 
 net = cv2.dnn.readNetFromONNX("yolov8n-seg.onnx")
-
 latest_frame = None
 
 
@@ -12,21 +11,22 @@ async def startCam():
     global latest_frame
 
     if sys.platform.startswith('win'):
-        print("[INFO] Запуск на Windows. Используем стандартный бэкенд камеры.")
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # CAP_DSHOW убирает задержку старта на Windows
-        # ФИКС 1: Включаем фоновый поток обработки окон OpenCV для Windows, чтобы избежать "(Не отвечает)"
+        print("[INFO] Запуск на Windows.")
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         cv2.startWindowThread()
     else:
-        print("[INFO] Запуск на Linux/Raspberry Pi. Используем V4L2.")
+        print("[INFO] Запуск на Linux/Raspberry Pi.")
         cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2)
+
+    if not cap.isOpened():
+        print("[ERROR] Камера недоступна.")
 
     colors = np.random.randint(0, 255, size=(80, 3), dtype="uint8")
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("[WARNING] Не удалось получить кадр с камеры.")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.2)
             continue
 
         h, w = frame.shape[:2]
@@ -34,15 +34,9 @@ async def startCam():
         net.setInput(blob)
 
         output_names = net.getUnconnectedOutLayersNames()
+        outputs = net.forward(output_names)
 
-        # ФИКС 2: Выполняем тяжелый инференс нейросети без блокировки асинхронного цикла событий
-        loop = asyncio.get_running_loop()
-        outputs = await loop.run_in_executor(None, net.forward, output_names)
-
-        # ФИКС 3: Исправленный squeeze под стандартный выход YOLOv8 ONNX
         preds = np.squeeze(outputs[0])
-        if preds.ndim == 3:  # Если модель выдает многомерный тензор сегментации, берем первый слой детекций
-            preds = preds[0]
         preds = preds.T
 
         boxes, confs, class_ids = [], [], []
@@ -51,7 +45,6 @@ async def startCam():
             row = preds[i]
             classes_scores = row[4:84]
             _, score, _, maxLoc = cv2.minMaxLoc(classes_scores)
-
             class_id = maxLoc[0]
 
             if score > 0.5:
@@ -89,7 +82,8 @@ async def startCam():
         await asyncio.sleep(0.01)
 
     cap.release()
-    cv2.destroyAllWindows()
+    if sys.platform.startswith('win'):
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
