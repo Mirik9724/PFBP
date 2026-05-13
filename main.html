@@ -44,35 +44,30 @@
     <div class="container">
         <div class="joystick">
             <button class="empty"></button>
-            <!-- Нажатие "Вперед" отправляет команду влево -->
             <button onclick="sendCommand('l')">▲</button>
             <button class="empty"></button>
 
-            <!-- Нажатие "Влево" отправляет команду назад (инверсия направления) -->
             <button onclick="sendCommand('b')">◀</button>
             <button class="stop-btn" onclick="sendCommand('s')">■</button>
-            <!-- Нажатие "Вправо" отправляет команду вперед -->
             <button onclick="sendCommand('f')">▶</button>
 
             <button class="empty"></button>
-            <!-- Нажатие "Назад" отправляет команду вправо -->
             <button onclick="sendCommand('r')">▼</button>
             <button class="empty"></button>
         </div>
 
-                <div class="camera-block">
+        <div class="camera-block">
             <div class="viewfinder">
-                <!-- Указываем эндпоинт стрима прямо в src, браузер сам будет обновлять кадры -->
-                <img id="robot-frame" src="raspberrypi.local" alt="Кадр нейросети">
+                <span id="placeholder">Подключение к камере...</span>
+                <!-- ИСПРАВЛЕНИЕ: Чистый тег без кривых путей в src -->
+                <img id="robot-frame" style="display: none;" alt="Кадр нейросети">
             </div>
-            <!-- Вместо кнопки ручного запроса — кнопка перезапуска потока при сбое -->
-            <button class="cam-btn" onclick="document.getElementById('robot-frame').src='raspberrypi.local Date().getTime()">🔄 Перезапустить трансляцию</button>
+            <button class="cam-btn" onclick="updateSnapshot()">📸 Обновить сейчас</button>
         </div>
-
     </div>
 
-    <!-- Весь JavaScript собран здесь, дубликаты удалены -->
     <script>
+        // ИСПРАВЛЕНИЕ: Строго пишем http:// и порт 5000
         const ROBOT_BASE_URL = 'http://raspberrypi.local:5000';
 
         function sendCommand(endpoint) {
@@ -86,7 +81,6 @@
             const cacheBuster = new Date().getTime();
             const url = `${ROBOT_BASE_URL}/camera_frame?t=${cacheBuster}`;
 
-            // Запрос в обход кэша
             fetch(url, { cache: "no-store" })
                 .then(response => {
                     if (!response.ok) throw new Error('Ошибка сети');
@@ -105,11 +99,17 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    placeholder.innerText = 'Ошибка обновления кадра';
+                    placeholder.innerText = 'Ошибка получения кадра';
                     placeholder.style.display = 'block';
                     img.style.display = 'none';
                 });
         }
+
+        // Опрашиваем буфер малинки каждые 250 мс, ловя новые кадры от cam.py
+        setInterval(updateSnapshot, 250);
+
+        // Первый запуск при открытии страницы
+        window.onload = updateSnapshot;
     </script>
 </body>
 </html>

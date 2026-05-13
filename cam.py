@@ -49,7 +49,8 @@ def startCam():
         output_names = net.getUnconnectedOutLayersNames()
         outputs = net.forward(output_names)
 
-        preds = np.squeeze(outputs[0])
+        # preds = np.squeeze(outputs[0])
+        preds = np.squeeze(outputs)
         preds = preds.T
 
         boxes, confs, class_ids = [], [], []
@@ -59,8 +60,8 @@ def startCam():
             classes_scores = row[4:84]
             _, score, _, maxLoc = cv2.minMaxLoc(classes_scores)
 
-            # ФИКС: извлекаем координату x из кортежа maxLoc
-            class_id = maxLoc[0]
+            # class_id = maxLoc[0]
+            class_id = maxLoc[0] if isinstance(maxLoc, (tuple, list)) else maxLoc
 
             if score > 0.5:
                 cx, cy, cw, ch = row[0:4]
