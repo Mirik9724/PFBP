@@ -11,15 +11,22 @@ def startCam():
     global latest_frame
 
     if sys.platform.startswith('win'):
-        print("[INFO] Запуск на Windows.")
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        print("[INFO] Запуск на Windows. Поиск доступной камеры...")
+        cap = None
+        for backend in [cv2.CAP_DSHOW, cv2.CAP_MSMF]:
+            for idx in [0, 1, 2, 3]:
+                cap = cv2.VideoCapture(idx, backend)
+                if cap.isOpened():
+                    print(
+                        f"[INFO] Успешно подключено! Индекс: {idx}, Бэкенд: {'DSHOW' if backend == cv2.CAP_DSHOW else 'MSMF'}")
+                    break
+            if cap and cap.isOpened():
+                break
+
 
     else:
         print("[INFO] Запуск на Linux/Raspberry Pi.")
-        # ФИКС 1: Передаем числовой индекс 0 вместо строки, явно указывая бэкенд V4L2
         cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-
-        # ФИКС 2: Если индекс 0 занят или недоступен, перебираем другие возможные индексы малинки
         if not cap.isOpened():
             for idx in [2, 4, 1]:
                 print(f"[INFO] Индекс 0 недоступен. Пробуем индекс {idx}...")
@@ -88,7 +95,8 @@ def startCam():
 
         _, encoded_img = cv2.imencode('.jpg', frame)
         latest_frame = encoded_img.tobytes()
-        print(latest_frame)
+        with open("image.jpg", "wb") as f:
+            f.write(latest_frame)
 
         if sys.platform.startswith('win'):
             cv2.imshow("ELCamera", frame)
