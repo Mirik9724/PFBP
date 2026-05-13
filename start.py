@@ -10,7 +10,7 @@ from webSer import app
 
 async def start():
     # await asyncio.to_thread(loadModel)
-    cam_thread = threading.Thread(target=lambda: asyncio.run(startCam()), daemon=True)
+    cam_thread = threading.Thread(startCam(), daemon=True)
     cam_thread.start()
     #
     # listC()

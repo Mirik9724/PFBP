@@ -1,32 +1,32 @@
 import cv2
 import numpy as np
-import asyncio
 import sys
+import time
 
+# Инициализация модели
 net = cv2.dnn.readNetFromONNX("yolov8n-seg.onnx")
-latest_frame = None
 
 
-async def startCam():
-    global latest_frame
-
+def startCam():
     if sys.platform.startswith('win'):
         print("[INFO] Запуск на Windows.")
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cv2.startWindowThread()
     else:
         print("[INFO] Запуск на Linux/Raspberry Pi.")
         cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2)
 
     if not cap.isOpened():
         print("[ERROR] Камера недоступна.")
+        return
 
     colors = np.random.randint(0, 255, size=(80, 3), dtype="uint8")
+    print("[INFO] Камера успешно запущена. Начинаем обработку...")
 
+    # Обычный синхронный цикл (ФИКС ЗАВИСАНИЯ)
     while True:
         ret, frame = cap.read()
         if not ret:
-            await asyncio.sleep(0.2)
+            time.sleep(0.1)
             continue
 
         h, w = frame.shape[:2]
@@ -34,8 +34,11 @@ async def startCam():
         net.setInput(blob)
 
         output_names = net.getUnconnectedOutLayersNames()
+
+        # Теперь вызов выполняется в синхронном потоке и не вешает планировщик asyncio
         outputs = net.forward(output_names)
 
+        # ФИКС ИНДЕКСАЦИИ: Забираем только детекции (первый элемент кортежа из YOLOv8-seg)
         preds = np.squeeze(outputs[0])
         preds = preds.T
 
@@ -71,15 +74,16 @@ async def startCam():
                 cv2.putText(frame, label, (x, y - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        _, encoded_img = cv2.imencode('.jpg', frame)
-        latest_frame = encoded_img.tobytes()
+        # Сохраняем готовый снимок на диск для webSer.py
+        cv2.imwrite("temp_frame.jpg", frame)
 
         if sys.platform.startswith('win'):
             cv2.imshow("ELCamera", frame)
             if cv2.waitKey(1) & 0xFF == 27:
                 break
 
-        await asyncio.sleep(0.01)
+        # Небольшая задержка, чтобы CPU малинки не грелся до 100%
+        time.sleep(0.01)
 
     cap.release()
     if sys.platform.startswith('win'):
@@ -87,4 +91,7 @@ async def startCam():
 
 
 if __name__ == "__main__":
-    asyncio.run(startCam())
+    try:
+        startCam()
+    except KeyboardInterrupt:
+        print("[INFO] Скрипт остановлен пользователем.")
