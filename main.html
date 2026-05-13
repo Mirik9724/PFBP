@@ -44,15 +44,19 @@
     <div class="container">
         <div class="joystick">
             <button class="empty"></button>
-            <button onclick="sendCommand('f')">▲</button>
+            <!-- Нажатие "Вперед" отправляет команду влево -->
+            <button onclick="sendCommand('l')">▲</button>
             <button class="empty"></button>
 
-            <button onclick="sendCommand('l')">◀</button>
+            <!-- Нажатие "Влево" отправляет команду назад (инверсия направления) -->
+            <button onclick="sendCommand('b')">◀</button>
             <button class="stop-btn" onclick="sendCommand('s')">■</button>
-            <button onclick="sendCommand('r')">▶</button>
+            <!-- Нажатие "Вправо" отправляет команду вперед -->
+            <button onclick="sendCommand('f')">▶</button>
 
             <button class="empty"></button>
-            <button onclick="sendCommand('b')">▼</button>
+            <!-- Нажатие "Назад" отправляет команду вправо -->
+            <button onclick="sendCommand('r')">▼</button>
             <button class="empty"></button>
         </div>
 
