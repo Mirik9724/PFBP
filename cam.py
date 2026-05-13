@@ -13,9 +13,20 @@ def startCam():
     if sys.platform.startswith('win'):
         print("[INFO] Запуск на Windows.")
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
     else:
         print("[INFO] Запуск на Linux/Raspberry Pi.")
-        cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2)
+        # ФИКС 1: Передаем числовой индекс 0 вместо строки, явно указывая бэкенд V4L2
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+
+        # ФИКС 2: Если индекс 0 занят или недоступен, перебираем другие возможные индексы малинки
+        if not cap.isOpened():
+            for idx in [2, 4, 1]:
+                print(f"[INFO] Индекс 0 недоступен. Пробуем индекс {idx}...")
+                cap = cv2.VideoCapture(idx, cv2.CAP_V4L2)
+                if cap.isOpened():
+                    print(f"[INFO] Успешно подключено к камере на индексе {idx}!")
+                    break
 
     if not cap.isOpened():
         print("[ERROR] Камера недоступна.")
