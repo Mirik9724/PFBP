@@ -30,8 +30,6 @@ async def start():
     # speed(50)
     # await asyncio.sleep(1)
     # stop()
-    while cam_thread.is_alive():
-        await asyncio.sleep(1)
 
     print("[INFO] Запуск веб-сервера на http://raspberrypi.local:5000")
     await asyncio.to_thread(uvicorn.run, app, host="0.0.0.0", port=5000, log_level="info")
