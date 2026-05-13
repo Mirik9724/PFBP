@@ -49,7 +49,7 @@ async def left():
 
 @app.get("/")
 async def joystick_page():
-    return FileResponse("index.html")
+    return FileResponse("main.html")
 
 @app.get("/camera_frame")
 async def get_camera_frame():
