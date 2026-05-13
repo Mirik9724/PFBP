@@ -88,6 +88,7 @@ def startCam():
 
         _, encoded_img = cv2.imencode('.jpg', frame)
         latest_frame = encoded_img.tobytes()
+        print(latest_frame)
 
         if sys.platform.startswith('win'):
             cv2.imshow("ELCamera", frame)
