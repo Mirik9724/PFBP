@@ -8,6 +8,7 @@ latest_frame = None
 
 async def startCam():
     cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2)
+    # cap = cv2.VideoCapture(0)
     colors = np.random.randint(0, 255, size=(80, 3), dtype="uint8")
 
     while True:
@@ -58,9 +59,10 @@ async def startCam():
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
         _, encoded_img = cv2.imencode('.jpg', frame)
+        global latest_frame
         latest_frame = encoded_img.tobytes()
 
-        # cv2.imshow('AI Vision OpenCV', frame)
+        cv2.imshow('AI Vision OpenCV', frame)
         await asyncio.sleep(0.01)
 
     cap.release()
