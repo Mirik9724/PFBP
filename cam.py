@@ -13,9 +13,20 @@ def startCam():
     if sys.platform.startswith('win'):
         print("[INFO] Запуск на Windows.")
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
     else:
         print("[INFO] Запуск на Linux/Raspberry Pi.")
-        cap = cv2.VideoCapture(1, cv2.CAP_V4L2)
+        # ФИКС 1: Передаем числовой индекс 0 вместо строки, явно указывая бэкенд V4L2
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+
+        # ФИКС 2: Если индекс 0 занят или недоступен, перебираем другие возможные индексы малинки
+        if not cap.isOpened():
+            for idx in [2, 4, 1]:
+                print(f"[INFO] Индекс 0 недоступен. Пробуем индекс {idx}...")
+                cap = cv2.VideoCapture(idx, cv2.CAP_V4L2)
+                if cap.isOpened():
+                    print(f"[INFO] Успешно подключено к камере на индексе {idx}!")
+                    break
 
     if not cap.isOpened():
         print("[ERROR] Камера недоступна.")
@@ -24,7 +35,6 @@ def startCam():
     colors = np.random.randint(0, 255, size=(80, 3), dtype="uint8")
 
     while True:
-        # Засекаем время начала цикла обработки
         start_time = time.time()
 
         ret, frame = cap.read()
@@ -39,7 +49,7 @@ def startCam():
         output_names = net.getUnconnectedOutLayersNames()
         outputs = net.forward(output_names)
 
-        preds = np.squeeze(outputs)
+        preds = np.squeeze(outputs[0])
         preds = preds.T
 
         boxes, confs, class_ids = [], [], []
@@ -48,7 +58,9 @@ def startCam():
             row = preds[i]
             classes_scores = row[4:84]
             _, score, _, maxLoc = cv2.minMaxLoc(classes_scores)
-            class_id = maxLoc
+
+            # ФИКС: извлекаем координату x из кортежа maxLoc
+            class_id = maxLoc[0]
 
             if score > 0.5:
                 cx, cy, cw, ch = row[0:4]
@@ -82,10 +94,8 @@ def startCam():
             if cv2.waitKey(1) & 0xFF == 27:
                 break
 
-        # Вычисляем, сколько времени заняла детекция
+        # time.sleep(0.01)
         elapsed_time = time.time() - start_time
-
-        # Динамическая пауза: спим ровно столько, сколько осталось до 1 секунды
         sleep_time = 1.0 - elapsed_time
         if sleep_time > 0:
             time.sleep(sleep_time)
