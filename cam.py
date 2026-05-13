@@ -49,8 +49,7 @@ def startCam():
         output_names = net.getUnconnectedOutLayersNames()
         outputs = net.forward(output_names)
 
-        # preds = np.squeeze(outputs[0])
-        preds = np.squeeze(outputs)
+        preds = np.squeeze(outputs[0])
         preds = preds.T
 
         boxes, confs, class_ids = [], [], []
