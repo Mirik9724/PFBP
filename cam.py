@@ -4,6 +4,8 @@ import asyncio
 
 net = cv2.dnn.readNetFromONNX("yolov8n-seg.onnx")
 
+latest_frame = None
+
 async def startCam():
     cap = cv2.VideoCapture("/dev/video0", cv2.CAP_V4L2)
     colors = np.random.randint(0, 255, size=(80, 3), dtype="uint8")
@@ -55,7 +57,10 @@ async def startCam():
                 cv2.putText(frame, label, (x, y - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        cv2.imshow('AI Vision OpenCV', frame)
+        _, encoded_img = cv2.imencode('.jpg', frame)
+        latest_frame = encoded_img.tobytes()
+
+        # cv2.imshow('AI Vision OpenCV', frame)
         await asyncio.sleep(0.01)
 
     cap.release()

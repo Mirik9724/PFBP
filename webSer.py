@@ -1,16 +1,26 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 import uvicorn
 import sys, os
-import requests
-import socket
 
+from fastapi.openapi.models import Response
+
+import cam
+
+from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 
 sys.path.append(os.path.dirname(__file__))
 from PFBP import *
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/s")
 async def stop_robot():
@@ -40,6 +50,13 @@ async def left():
 @app.get("/")
 async def joystick_page():
     return FileResponse("index.html")
+
+@app.get("/camera_frame")
+async def get_camera_frame():
+    if cam.latest_frame is None:
+        return Response(content="Кадр еще не подготовлен нейросетью", status_code=503)
+
+    return Response(content=cam.latest_frame, media_type="image/jpeg")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)

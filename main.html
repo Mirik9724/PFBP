@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление Роботом</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .container { display: flex; flex-direction: row; gap: 40px; align-items: center; }
+        .joystick { display: grid; grid-template-columns: repeat(3, 100px); gap: 15px; }
+        button {
+            font-size: 24px; font-weight: bold; border: none; border-radius: 12px;
+            background-color: #007bff; color: white; cursor: pointer; height: 100px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:active { background-color: #0056b3; }
+        .empty { background: none; box-shadow: none; cursor: default; }
+        .stop-btn { background-color: #dc3545; }
+
+        .camera-block { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .viewfinder {
+            width: 400px; height: 300px; border: 3px dashed #ccc; border-radius: 12px;
+            background-color: #ddd; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; color: #666;
+        }
+        .viewfinder img { width: 100%; height: 100%; object-fit: contain; }
+        .cam-btn { font-size: 16px; padding: 12px 24px; background-color: #28a745; height: auto; }
+    </style>
+</head>
+<body>
+
+    <h1>Пульт управления роботом</h1>
+
+    <div class="container">
+        <div class="joystick">
+            <button class="empty"></button>
+            <button onclick="sendCommand('f')">▲</button>
+            <button class="empty"></button>
+
+            <button onclick="sendCommand('l')">◀</button>
+            <button class="stop-btn" onclick="sendCommand('s')">■</button>
+            <button onclick="sendCommand('r')">▶</button>
+
+            <button class="empty"></button>
+            <button onclick="sendCommand('b')">▼</button>
+            <button class="empty"></button>
+        </div>
+
+        <div class="camera-block">
+            <div class="viewfinder">
+                <span id="placeholder">Нажмите для получения снимка</span>
+                <img id="robot-frame" style="display: none;" alt="Кадр нейросети">
+            </div>
+            <button class="cam-btn" onclick="updateSnapshot()">📸 Получить кадр ИИ</button>
+        </div>
+    </div>
+
+    <script>
+        const ROBOT_BASE_URL = 'http://raspberrypi.local:5000';
+
+        function sendCommand(endpoint) {
+            fetch(`${ROBOT_BASE_URL}/${endpoint}`).catch(err => console.error(err));
+        }
+
+        function updateSnapshot() {
+            const img = document.getElementById('robot-frame');
+            const placeholder = document.getElementById('placeholder');
+
+            const cacheBuster = new Date().getTime();
+            img.src = `${ROBOT_BASE_URL}/camera_frame?t=${cacheBuster}`;
+
+            img.onload = function() {
+                placeholder.style.display = 'none';
+                img.style.display = 'block';
+            };
+            img.onerror = function() {
+                placeholder.innerText = 'Ошибка получения кадра';
+                placeholder.style.display = 'block';
+                img.style.display = 'none';
+            };
+        }
+    </script>
+</body>
+</html>

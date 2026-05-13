@@ -1,8 +1,4 @@
-import asyncio
-import threading
-import sys
-import os
-
+import asyncio, threading, sys, os, uvicorn
 sys.path.append(os.path.dirname(__file__))
 
 # from audi.au2Txt import *
@@ -10,6 +6,7 @@ sys.path.append(os.path.dirname(__file__))
 # from listenCmd import listC
 from cam import startCam
 from PFBP import *
+from webSer import app
 
 async def start():
     # await asyncio.to_thread(loadModel)
@@ -35,5 +32,9 @@ async def start():
     # stop()
     while cam_thread.is_alive():
         await asyncio.sleep(1)
+
+    print("[INFO] Запуск веб-сервера на http://raspberrypi.local:5000")
+    await asyncio.to_thread(uvicorn.run, app, host="0.0.0.0", port=5000, log_level="info")
+
 
 asyncio.run(start())
