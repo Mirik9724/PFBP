@@ -95,7 +95,6 @@ def startCam():
             if cv2.waitKey(1) & 0xFF == 27:
                 break
 
-        # time.sleep(0.01)
         elapsed_time = time.time() - start_time
         sleep_time = 1.0 - elapsed_time
         if sleep_time > 0:
