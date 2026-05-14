@@ -11,15 +11,18 @@ rSp = gp.PWM(6, 100)
 rSp.start(0)
 lSp.start(0)
 
-RIGHT_MOTOR_CORRECTION = 0.5
+lCof = 1.0
+rCof = 0.3
 
 def speed(sp):
     base_val = max(0, min(100, sp))
 
-    lSp.ChangeDutyCycle(base_val)
+    left_val = max(0, min(100, base_val * lCof))
+    lSp.ChangeDutyCycle(left_val)
 
-    right_val = max(0, min(100, base_val * RIGHT_MOTOR_CORRECTION))
+    right_val = max(0, min(100, base_val * rCof))
     rSp.ChangeDutyCycle(right_val)
+
 
 
 def move(Lft, Rgt):
