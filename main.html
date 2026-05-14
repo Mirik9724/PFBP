@@ -214,17 +214,22 @@
         window.addEventListener('contextmenu', e => e.preventDefault());
 
         // Привязка событий мыши и тача к круглому джойстику
-        handle.addEventListener('mousedown', startDrag);
+        zone.addEventListener('mousedown', startDrag);
         window.addEventListener('mousemove', drag);
         window.addEventListener('mouseup', stopDrag);
 
-        handle.addEventListener('touchstart', startDrag, { passive: false });
+        zone.addEventListener('touchstart', startDrag, { passive: false });
         window.addEventListener('touchmove', drag, { passive: false });
         window.addEventListener('touchend', stopDrag);
 
         function startDrag(e) {
             isDragging = true;
-            if (e.cancelable) e.preventDefault();
+
+            if (e.cancelable) {
+                e.preventDefault();
+            }
+
+            drag(e);
         }
 
         function drag(e) {
