@@ -5,7 +5,7 @@ import time
 
 net = cv2.dnn.readNetFromONNX("yolov8n-seg.onnx")
 latest_frame = None
-
+demoMode = True
 
 def startCam():
     global latest_frame
@@ -96,7 +96,7 @@ def startCam():
         _, encoded_img = cv2.imencode('.jpg', frame)
         latest_frame = encoded_img.tobytes()
 
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith('win') or demoMode:
             cv2.imshow("ELCamera", frame)
             if cv2.waitKey(1) & 0xFF == 27:
                 break
@@ -107,7 +107,7 @@ def startCam():
             time.sleep(sleep_time)
 
     cap.release()
-    if sys.platform.startswith('win'):
+    if sys.platform.startswith('win') or demoMode:
         cv2.destroyAllWindows()
 
 
