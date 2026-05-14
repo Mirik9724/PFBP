@@ -1,5 +1,6 @@
 import uvicorn, sys, os, asyncio
-from fastapi import FastAPI, Response, Query
+from fastapi import FastAPI, Response, Query, HTTPException
+from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, StreamingResponse
 
@@ -22,6 +23,15 @@ NO_CACHE_HEADERS = {
     "Pragma": "no-cache",
     "Expires": "0"
 }
+
+SECRET_CODE = "0000"
+
+def check_security(code: str):
+    if code != SECRET_CODE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Неверный код безопасности"
+        )
 
 @app.get("/set_speed")
 async def set_speed(speed_val: int = Query(default=100, alias="speed")):

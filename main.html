@@ -169,26 +169,28 @@
         const ROBOT_BASE_URL = window.location.origin;
         let currentSpeed = 100;
 
+        // Запрос пин-кода при входе на страницу
+        let pinCode = prompt("Введите код безопасности для управления роботом:", "");
+
         // Мгновенное изменение скорости при перетаскивании ползунка
         function changeSpeedLive(val) {
             currentSpeed = val;
             document.getElementById('speed-value').innerText = val;
 
-            // Отправка новой скорости на выделенный эндпоинт сервера
-            fetch(`${ROBOT_BASE_URL}/set_speed?speed=${val}`)
+            fetch(`${ROBOT_BASE_URL}/set_speed?speed=${val}&code=${pinCode}`)
                 .catch(err => console.error("Ошибка изменения скорости:", err));
         }
 
-        // Отправка команд движения (передает и текущую скорость)
+        // Отправка команд движения
         function sendCommand(endpoint) {
             const url = endpoint === 's'
-                ? `${ROBOT_BASE_URL}/${endpoint}`
-                : `${ROBOT_BASE_URL}/${endpoint}?speed=${currentSpeed}`;
+                ? `${ROBOT_BASE_URL}/${endpoint}?code=${pinCode}`
+                : `${ROBOT_BASE_URL}/${endpoint}?speed=${currentSpeed}&code=${pinCode}`;
 
             fetch(url).catch(err => console.error("Ошибка команды:", err));
         }
 
-        // Переподключение MJPEG потока видео
+        // Переподключение MJPEG потока видео с передачей пин-кода
         function restartStream() {
             const img = document.getElementById('robot-frame');
             const placeholder = document.getElementById('placeholder');
@@ -197,8 +199,8 @@
             placeholder.style.display = 'block';
             img.style.display = 'none';
 
-            // Сброс кэша с помощью таймштампа
-            img.src = `${ROBOT_BASE_URL}/video_feed?t=${new Date().getTime()}`;
+            // Передаем параметр code прямо в URL картинки/потока
+            img.src = `${ROBOT_BASE_URL}/video_feed?code=${pinCode}&t=${new Date().getTime()}`;
         }
 
         // Инициализация видеопотока при загрузке страницы
