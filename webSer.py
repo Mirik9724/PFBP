@@ -70,11 +70,16 @@ async def get_camera_frame():
 async def video_stream_generator():
     while True:
         if cam.latest_frame is not None:
+            # Отдаем текущий актуальный кадр
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + cam.latest_frame + b'\r\n')
-        await asyncio.sleep(0.03) # Ограничение ~30 FPS для разгрузки процессора
 
-# Вариант Б: Эндпоинт для плавной потоковой передачи видео
+        # КРИТИЧНО: Пауза должна быть строго внутри цикла while True,
+        # даже если кадр cam.latest_frame временно равен None.
+        # Это позволяет асинхронному движку FastAPI переключаться на другие задачи.
+        await asyncio.sleep(0.03)
+
+    # Вариант Б: Эндпоинт для плавной потоковой передачи видео
 @app.get("/video_feed")
 async def video_feed():
     return StreamingResponse(video_stream_generator(), media_type="multipart/x-mixed-replace; boundary=frame")
