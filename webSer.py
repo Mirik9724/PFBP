@@ -23,6 +23,11 @@ NO_CACHE_HEADERS = {
     "Expires": "0"
 }
 
+@app.get("/set_speed")
+async def set_speed(speed_val: int = Query(default=100, alias="speed")):
+    speed(speed_val)
+    return {"status": "speed_updated", "speed": speed_val}
+
 @app.get("/")
 async def joystick_page():
     return FileResponse("main.html")
