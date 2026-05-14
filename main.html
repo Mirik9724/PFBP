@@ -198,6 +198,32 @@
     </div>
 
     <script>
+        function drag(e) {
+    if (!isDragging) return;
+    if (e.cancelable) e.preventDefault();
+
+    // Корректное чтение координат как для мыши, так и для тач-событий
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const zoneRect = zone.getBoundingClientRect();
+    const centerX = zoneRect.left + zoneRect.width / 2;
+    const centerY = zoneRect.top + zoneRect.height / 2;
+
+    let deltaX = clientX - centerX;
+    let deltaY = clientY - centerY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    if (distance > maxRadius) {
+        deltaX = (deltaX / distance) * maxRadius;
+        deltaY = (deltaY / distanceё) * maxRadius;
+    }
+
+    updateHandlePosition(deltaX, deltaY);
+    processJoystickDirection(deltaX, deltaY);
+}
+
+
         const ROBOT_BASE_URL = window.location.origin;
         let currentSpeed = 100;
         let pinCode = prompt("Введите код безопасности для управления роботом:", "");
@@ -230,30 +256,6 @@
             }
 
             drag(e);
-        }
-
-        function drag(e) {
-            if (!isDragging) return;
-            if (e.cancelable) e.preventDefault();
-
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            const zoneRect = zone.getBoundingClientRect();
-            const centerX = zoneRect.left + zoneRect.width / 2;
-            const centerY = zoneRect.top + zoneRect.height / 2;
-
-            let deltaX = clientX - centerX;
-            let deltaY = clientY - centerY;
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-            if (distance > maxRadius) {
-                deltaX = (deltaX / distance) * maxRadius;
-                deltaY = (deltaY / distance) * maxRadius;
-            }
-
-            updateHandlePosition(deltaX, deltaY);
-            processJoystickDirection(deltaX, deltaY);
         }
 
         function stopDrag() {
