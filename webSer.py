@@ -49,26 +49,26 @@ async def stop_robot():
 
 @app.get("/f")
 async def forward(speed_val: int = Query(default=100, alias="speed")):
-    move(True, True)
     speed(speed_val)
+    move(True, True)
     return {"status": "f", "speed": speed_val}
 
 @app.get("/b")
 async def back(speed_val: int = Query(default=100, alias="speed")):
-    move(False, False)
     speed(speed_val)
+    move(False, False)
     return {"status": "b", "speed": speed_val}
 
 @app.get("/r")
 async def right(speed_val: int = Query(default=100, alias="speed")):
-    move(True, False)
     speed(speed_val)
+    move(True, False)
     return {"status": "r", "speed": speed_val}
 
 @app.get("/l")
 async def left(speed_val: int = Query(default=100, alias="speed")):
-    move(False, True)
     speed(speed_val)
+    move(False, True)
     return {"status": "l", "speed": speed_val}
 
 @app.get("/camera_frame")
