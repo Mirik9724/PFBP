@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Управление Роботом</title>
     <style>
         body {
@@ -10,35 +10,45 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
             background-color: #f0f2f5;
-            padding: 20px;
+            padding: 15px;
+            box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            /* Отключаем жесты обновления страницы на смартфонах */
+            overscroll-behavior-y: contain;
         }
         h1 {
             color: #333;
-            margin-bottom: 30px;
+            margin: 10px 0 20px 0;
+            font-size: 24px;
+            text-align: center;
         }
         .container {
             display: flex;
             flex-direction: row;
-            gap: 40px;
-            align-items: center;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
         }
         .controls-block {
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 20px;
             align-items: center;
+            width: 100%;
+            max-width: 320px;
         }
 
         /* Круглый джойстик */
         .joystick-zone {
-            width: 240px;
-            height: 240px;
+            width: 220px;
+            height: 220px;
             background: #e0e0e0;
             border-radius: 50%;
             position: relative;
@@ -46,7 +56,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            touch-action: none; /* Отключает скролл экрана при дебаге джойстика */
+            touch-action: none; /* Запрещает скролл экрана при перетаскивании джойстика */
         }
         .joystick-handle {
             width: 80px;
@@ -83,6 +93,7 @@
         }
         .speed-control input[type="range"] {
             width: 100%;
+            height: 25px; /* Увеличено для удобного нажатия пальцем */
             cursor: pointer;
         }
 
@@ -92,10 +103,13 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
+            width: 100%;
+            max-width: 450px;
         }
         .viewfinder {
-            width: 400px;
-            height: 300px;
+            width: 100%;
+            aspect-ratio: 4 / 3; /* Автоматическое масштабирование под экран */
+            max-width: 450px;
             border: 3px dashed #ccc;
             border-radius: 12px;
             background-color: #ddd;
@@ -105,6 +119,7 @@
             overflow: hidden;
             color: #666;
             position: relative;
+            box-sizing: border-box;
         }
         .viewfinder img {
             width: 100%;
@@ -113,16 +128,44 @@
         }
         .cam-btn {
             font-size: 16px;
-            padding: 12px 24px;
+            padding: 14px 24px;
             background-color: #28a745;
             border: none;
             border-radius: 12px;
             color: white;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%; /* Растягивается по ширине на мобильных */
+            max-width: 300px;
+            font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
         }
         .cam-btn:active {
             background-color: #1e7e34;
+        }
+
+        /* Адаптивный дизайн для мобильных экранов (смартфоны и узкие планшеты) */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            .container {
+                flex-direction: column; /* Элементы выстраиваются вертикально */
+                gap: 20px;
+                align-items: center;
+            }
+            .camera-block {
+                order: -1; /* Видеопоток встает НАВЕРХ, чтобы было видно куда едет робот */
+            }
+            .joystick-zone {
+                width: 200px;
+                height: 200px;
+            }
+            .joystick-handle {
+                width: 74px;
+                height: 74px;
+            }
         }
     </style>
 </head>
@@ -131,7 +174,7 @@
     <h1>Пульт управления роботом</h1>
 
     <div class="container">
-        <!-- Левая колонка: Круглый Джойстик и Скорость -->
+        <!-- Блок управления: Джойстик и Скорость -->
         <div class="controls-block">
             <div class="joystick-zone" id="zone">
                 <div class="joystick-handle" id="handle"></div>
@@ -144,7 +187,7 @@
             </div>
         </div>
 
-        <!-- Правая колонка: Видеотрансляция -->
+        <!-- Блок камеры: Видеотрансляция -->
         <div class="camera-block">
             <div class="viewfinder">
                 <img id="robot-frame" src="" onerror="this.style.display='none'; document.getElementById('placeholder').style.display='block';" onload="this.style.display='block'; document.getElementById('placeholder').style.display='none';" alt="Кадр нейросети">
@@ -159,17 +202,16 @@
         let currentSpeed = 100;
         let pinCode = prompt("Введите код безопасности для управления роботом:", "");
 
-        // Переменные состояния джойстика
         const zone = document.getElementById('zone');
         const handle = document.getElementById('handle');
         let isDragging = false;
         let lastCommand = 's';
 
-        // Состояние клавиатуры WASD
         const activeKeys = { w: false, a: false, s: false, d: false };
+        const maxRadius = 70; // Ограничение радиуса адаптировано под размер мобильного круга
 
-        // Максимальный радиус движения внутренней ручки
-        const maxRadius = 80;
+        // Запрет контекстного меню для предотвращения ложных зажатий на смартфонах
+        window.addEventListener('contextmenu', e => e.preventDefault());
 
         // Привязка событий мыши и тача к круглому джойстику
         handle.addEventListener('mousedown', startDrag);
@@ -182,12 +224,12 @@
 
         function startDrag(e) {
             isDragging = true;
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
         }
 
         function drag(e) {
             if (!isDragging) return;
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
 
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -200,7 +242,6 @@
             let deltaY = clientY - centerY;
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-            // Ограничиваем движение рамками круга
             if (distance > maxRadius) {
                 deltaX = (deltaX / distance) * maxRadius;
                 deltaY = (deltaY / distance) * maxRadius;
@@ -225,27 +266,24 @@
             sendRobotCommand('s');
         }
 
-        // Анализ координат и выбор логического направления (l, r, b, f)
         function processJoystickDirection(x, y) {
-            const threshold = 20; // Мертвая зона в центре
+            const threshold = 15; // Мертвая зона
             if (Math.sqrt(x*x + y*y) < threshold) {
                 sendRobotCommand('s');
                 return;
             }
 
-            // Вычисляем угол в градусах
             let angle = Math.atan2(-y, x) * (180 / Math.PI);
             if (angle < 0) angle += 360;
 
-            // Распределение секторов (Вперед, Назад, Лево, Право)
             if (angle >= 45 && angle < 135) {
                 sendRobotCommand('l'); // Вперед
             } else if (angle >= 135 && angle < 225) {
-                sendRobotCommand('b'); // Налево
+                sendRobotCommand('b'); // Лево
             } else if (angle >= 225 && angle < 315) {
                 sendRobotCommand('r'); // Назад
             } else {
-                sendRobotCommand('f'); // Направо
+                sendRobotCommand('f'); // Право
             }
         }
 
@@ -267,9 +305,8 @@
             }
         });
 
-        // Эмуляция смещения круглого джойстика от клавиатуры
         function updateKeyboardJoystick() {
-            if (isDragging) return; // Клавиатура игнорируется, если ведут пальцем/мышкой
+            if (isDragging) return;
 
             let kX = 0;
             let kY = 0;
@@ -283,7 +320,6 @@
             processJoystickDirection(kX, kY);
         }
 
-        // Логика отправки команд без лишнего дублирования пакетов
         function sendRobotCommand(command) {
             if (command === lastCommand) return;
             lastCommand = command;
@@ -295,7 +331,6 @@
             fetch(url).catch(err => console.error("Ошибка передачи:", err));
         }
 
-        // Мгновенное изменение базовой скорости ползунком
         function changeSpeedLive(val) {
             currentSpeed = val;
             document.getElementById('speed-value').innerText = val;
@@ -304,7 +339,6 @@
                 .catch(err => console.error("Ошибка изменения скорости:", err));
         }
 
-        // Переподключение MJPEG видео
         function restartStream() {
             const img = document.getElementById('robot-frame');
             const placeholder = document.getElementById('placeholder');
