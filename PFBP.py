@@ -11,7 +11,7 @@ rSp = gp.PWM(6, 100)
 rSp.start(0)
 lSp.start(0)
 
-RIGHT_MOTOR_CORRECTION = 0
+RIGHT_MOTOR_CORRECTION = 0.5
 
 def speed(sp):
     base_val = max(0, min(100, sp))
