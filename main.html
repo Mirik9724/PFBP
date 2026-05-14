@@ -15,6 +15,8 @@
             margin: 0;
             background-color: #f0f2f5;
             padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
         }
         h1 {
             color: #333;
@@ -32,40 +34,33 @@
             gap: 25px;
             align-items: center;
         }
-        .joystick {
-            display: grid;
-            grid-template-columns: repeat(3, 100px);
-            gap: 15px;
+
+        /* Круглый джойстик */
+        .joystick-zone {
+            width: 240px;
+            height: 240px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.15), 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none; /* Отключает скролл экрана при дебаге джойстика */
         }
-        button {
-            font-size: 24px;
-            font-weight: bold;
-            border: none;
-            border-radius: 12px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            height: 100px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background-color 0.1s, transform 0.05s;
+        .joystick-handle {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #007bff 0%, #0056b3 100%);
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            cursor: grab;
+            transition: transform 0.05s ease;
         }
-        button:active {
-            background-color: #0056b3;
-            transform: scale(0.98);
-        }
-        .empty {
-            background: none;
-            box-shadow: none;
-            cursor: default;
-        }
-        .empty:active {
-            transform: none;
-        }
-        .stop-btn {
-            background-color: #dc3545;
-        }
-        .stop-btn:active {
-            background-color: #bd2130;
+        .joystick-handle:active {
+            cursor: grabbing;
+            background: radial-gradient(circle, #0056b3 0%, #003d82 100%);
         }
 
         /* Блок управления скоростью */
@@ -120,7 +115,11 @@
             font-size: 16px;
             padding: 12px 24px;
             background-color: #28a745;
-            height: auto;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .cam-btn:active {
             background-color: #1e7e34;
@@ -132,25 +131,15 @@
     <h1>Пульт управления роботом</h1>
 
     <div class="container">
-        <!-- Левая колонка: Джойстик и Скорость -->
+        <!-- Левая колонка: Круглый Джойстик и Скорость -->
         <div class="controls-block">
-            <div class="joystick">
-                <button class="empty"></button>
-                <button onclick="sendCommand('l')">▲</button>
-                <button class="empty"></button>
-
-                <button onclick="sendCommand('b')">◀</button>
-                <button class="stop-btn" onclick="sendCommand('s')">■</button>
-                <button onclick="sendCommand('f')">▶</button>
-
-                <button class="empty"></button>
-                <button onclick="sendCommand('r')">▼</button>
-                <button class="empty"></button>
+            <div class="joystick-zone" id="zone">
+                <div class="joystick-handle" id="handle"></div>
             </div>
 
             <!-- Интерактивный ползунок скорости -->
             <div class="speed-control">
-                <label for="speed-slider">Скорость: <span id="speed-value">100</span></label>
+                <label for="speed-slider">Макс. Скорость: <span id="speed-value">100</span></label>
                 <input type="range" id="speed-slider" min="0" max="200" value="100" oninput="changeSpeedLive(this.value)">
             </div>
         </div>
@@ -168,11 +157,145 @@
     <script>
         const ROBOT_BASE_URL = window.location.origin;
         let currentSpeed = 100;
-
-        // Запрос пин-кода при входе на страницу
         let pinCode = prompt("Введите код безопасности для управления роботом:", "");
 
-        // Мгновенное изменение скорости при перетаскивании ползунка
+        // Переменные состояния джойстика
+        const zone = document.getElementById('zone');
+        const handle = document.getElementById('handle');
+        let isDragging = false;
+        let lastCommand = 's';
+
+        // Состояние клавиатуры WASD
+        const activeKeys = { w: false, a: false, s: false, d: false };
+
+        // Максимальный радиус движения внутренней ручки
+        const maxRadius = 80;
+
+        // Привязка событий мыши и тача к круглому джойстику
+        handle.addEventListener('mousedown', startDrag);
+        window.addEventListener('mousemove', drag);
+        window.addEventListener('mouseup', stopDrag);
+
+        handle.addEventListener('touchstart', startDrag, { passive: false });
+        window.addEventListener('touchmove', drag, { passive: false });
+        window.addEventListener('touchend', stopDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            e.preventDefault();
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const zoneRect = zone.getBoundingClientRect();
+            const centerX = zoneRect.left + zoneRect.width / 2;
+            const centerY = zoneRect.top + zoneRect.height / 2;
+
+            let deltaX = clientX - centerX;
+            let deltaY = clientY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            // Ограничиваем движение рамками круга
+            if (distance > maxRadius) {
+                deltaX = (deltaX / distance) * maxRadius;
+                deltaY = (deltaY / distance) * maxRadius;
+            }
+
+            updateHandlePosition(deltaX, deltaY);
+            processJoystickDirection(deltaX, deltaY);
+        }
+
+        function stopDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+            resetJoystick();
+        }
+
+        function updateHandlePosition(x, y) {
+            handle.style.transform = `translate(${x}px, ${y}px)`;
+        }
+
+        function resetJoystick() {
+            updateHandlePosition(0, 0);
+            sendRobotCommand('s');
+        }
+
+        // Анализ координат и выбор логического направления (l, r, b, f)
+        function processJoystickDirection(x, y) {
+            const threshold = 20; // Мертвая зона в центре
+            if (Math.sqrt(x*x + y*y) < threshold) {
+                sendRobotCommand('s');
+                return;
+            }
+
+            // Вычисляем угол в градусах
+            let angle = Math.atan2(-y, x) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+
+            // Распределение секторов (Вперед, Назад, Лево, Право)
+            if (angle >= 45 && angle < 135) {
+                sendRobotCommand('l'); // Вперед
+            } else if (angle >= 135 && angle < 225) {
+                sendRobotCommand('b'); // Налево
+            } else if (angle >= 225 && angle < 315) {
+                sendRobotCommand('r'); // Назад
+            } else {
+                sendRobotCommand('f'); // Направо
+            }
+        }
+
+        // Обработка клавиатуры WASD
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const key = e.key.toLowerCase();
+            if (key in activeKeys) {
+                activeKeys[key] = true;
+                updateKeyboardJoystick();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (key in activeKeys) {
+                activeKeys[key] = false;
+                updateKeyboardJoystick();
+            }
+        });
+
+        // Эмуляция смещения круглого джойстика от клавиатуры
+        function updateKeyboardJoystick() {
+            if (isDragging) return; // Клавиатура игнорируется, если ведут пальцем/мышкой
+
+            let kX = 0;
+            let kY = 0;
+
+            if (activeKeys.w) kY -= maxRadius;
+            if (activeKeys.s) kY += maxRadius;
+            if (activeKeys.a) kX -= maxRadius;
+            if (activeKeys.d) kX += maxRadius;
+
+            updateHandlePosition(kX, kY);
+            processJoystickDirection(kX, kY);
+        }
+
+        // Логика отправки команд без лишнего дублирования пакетов
+        function sendRobotCommand(command) {
+            if (command === lastCommand) return;
+            lastCommand = command;
+
+            const url = command === 's'
+                ? `${ROBOT_BASE_URL}/${command}?code=${pinCode}`
+                : `${ROBOT_BASE_URL}/${command}?speed=${currentSpeed}&code=${pinCode}`;
+
+            fetch(url).catch(err => console.error("Ошибка передачи:", err));
+        }
+
+        // Мгновенное изменение базовой скорости ползунком
         function changeSpeedLive(val) {
             currentSpeed = val;
             document.getElementById('speed-value').innerText = val;
@@ -181,16 +304,7 @@
                 .catch(err => console.error("Ошибка изменения скорости:", err));
         }
 
-        // Отправка команд движения
-        function sendCommand(endpoint) {
-            const url = endpoint === 's'
-                ? `${ROBOT_BASE_URL}/${endpoint}?code=${pinCode}`
-                : `${ROBOT_BASE_URL}/${endpoint}?speed=${currentSpeed}&code=${pinCode}`;
-
-            fetch(url).catch(err => console.error("Ошибка команды:", err));
-        }
-
-        // Переподключение MJPEG потока видео с передачей пин-кода
+        // Переподключение MJPEG видео
         function restartStream() {
             const img = document.getElementById('robot-frame');
             const placeholder = document.getElementById('placeholder');
@@ -199,11 +313,9 @@
             placeholder.style.display = 'block';
             img.style.display = 'none';
 
-            // Передаем параметр code прямо в URL картинки/потока
             img.src = `${ROBOT_BASE_URL}/video_feed?code=${pinCode}&t=${new Date().getTime()}`;
         }
 
-        // Инициализация видеопотока при загрузке страницы
         window.onload = restartStream;
     </script>
 </body>
