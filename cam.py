@@ -5,7 +5,7 @@ import time
 
 net = cv2.dnn.readNetFromONNX("yolov8n-seg.onnx")
 latest_frame = None
-demoMode = True
+demoMode = False
 
 def startCam():
     global latest_frame, demoMode
