@@ -8,7 +8,7 @@ latest_frame = None
 demoMode = True
 
 def startCam():
-    global latest_frame
+    global latest_frame, demoMode
 
     if sys.platform.startswith('win'):
         print("[INFO] Запуск на Windows. Поиск доступной камеры...")
@@ -22,7 +22,6 @@ def startCam():
                     break
             if cap and cap.isOpened():
                 break
-
 
     else:
         print("[INFO] Запуск на Linux/Raspberry Pi.")
