@@ -17,6 +17,7 @@
             padding: 20px;
         }
         .container { display: flex; flex-direction: row; gap: 40px; align-items: center; }
+        .controls-block { display: flex; flex-direction: column; gap: 25px; align-items: center; }
         .joystick { display: grid; grid-template-columns: repeat(3, 100px); gap: 15px; }
         button {
             font-size: 24px; font-weight: bold; border: none; border-radius: 12px;
@@ -26,6 +27,21 @@
         button:active { background-color: #0056b3; }
         .empty { background: none; box-shadow: none; cursor: default; }
         .stop-btn { background-color: #dc3545; }
+
+        /* Стили для ползунка скорости */
+        .speed-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .speed-control label { font-weight: bold; color: #333; font-size: 16px; }
+        .speed-control input[type="range"] { width: 100%; cursor: pointer; }
 
         .camera-block { display: flex; flex-direction: column; align-items: center; gap: 15px; }
         .viewfinder {
@@ -42,23 +58,30 @@
     <h1>Пульт управления роботом</h1>
 
     <div class="container">
-        <div class="joystick">
-            <button class="empty"></button>
-            <button onclick="sendCommand('l')">▲</button>
-            <button class="empty"></button>
+        <div class="controls-block">
+            <div class="joystick">
+                <button class="empty"></button>
+                <button onclick="sendCommand('l')">▲</button>
+                <button class="empty"></button>
 
-            <button onclick="sendCommand('b')">◀</button>
-            <button class="stop-btn" onclick="sendCommand('s')">■</button>
-            <button onclick="sendCommand('f')">▶</button>
+                <button onclick="sendCommand('b')">◀</button>
+                <button class="stop-btn" onclick="sendCommand('s')">■</button>
+                <button onclick="sendCommand('f')">▶</button>
 
-            <button class="empty"></button>
-            <button onclick="sendCommand('r')">▼</button>
-            <button class="empty"></button>
+                <button class="empty"></button>
+                <button onclick="sendCommand('r')">▼</button>
+                <button class="empty"></button>
+            </div>
+
+            <!-- Ползунок регулировки скорости -->
+            <div class="speed-control">
+                <label for="speed-slider">Скорость: <span id="speed-value">100</span></label>
+                <input type="range" id="speed-slider" min="0" max="200" value="100" oninput="updateSpeed(this.value)">
+            </div>
         </div>
 
         <div class="camera-block">
             <div class="viewfinder">
-                <!-- ФИКС: Используем прямой MJPEG-стрим вместо бесконечных GET-запросов через JS -->
                 <img id="robot-frame" src="" onerror="this.style.display='none'; document.getElementById('placeholder').style.display='block';" onload="this.style.display='block'; document.getElementById('placeholder').style.display='none';" alt="Кадр нейросети">
                 <span id="placeholder" style="display: none;">Подключение к камере...</span>
             </div>
@@ -67,11 +90,21 @@
     </div>
 
     <script>
-        // Если запускаете на малинке, измените на 'http://raspberrypi.local:5000'
         const ROBOT_BASE_URL = window.location.origin;
+        let currentSpeed = 100;
+
+        function updateSpeed(val) {
+            currentSpeed = val;
+            document.getElementById('speed-value').innerText = val;
+        }
 
         function sendCommand(endpoint) {
-            fetch(`${ROBOT_BASE_URL}/${endpoint}`).catch(err => console.error(err));
+            // Передаем скорость query-параметром для всех команд, кроме 's' (стоп)
+            const url = endpoint === 's'
+                ? `${ROBOT_BASE_URL}/${endpoint}`
+                : `${ROBOT_BASE_URL}/${endpoint}?speed=${currentSpeed}`;
+
+            fetch(url).catch(err => console.error(err));
         }
 
         function restartStream() {
@@ -80,7 +113,6 @@
             placeholder.innerText = "Переподключение...";
             placeholder.style.display = 'block';
             img.style.display = 'none';
-            // Сбрасываем кэш ссылки для перезапуска MJPEG сессии
             img.src = `${ROBOT_BASE_URL}/video_feed?t=${new Date().getTime()}`;
         }
 

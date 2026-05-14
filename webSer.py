@@ -1,5 +1,5 @@
 import uvicorn, sys, os, asyncio
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Query
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse, StreamingResponse
 
@@ -23,12 +23,9 @@ NO_CACHE_HEADERS = {
     "Expires": "0"
 }
 
-@app.get("/camera_frame")
-async def get_camera_frame():
-    if cam.latest_frame is None:
-        return Response(content="Кадр еще не подготовлен нейросетью", status_code=503)
-    return Response(content=cam.latest_frame, media_type="image/jpeg", headers=NO_CACHE_HEADERS)
-
+@app.get("/")
+async def joystick_page():
+    return FileResponse("main.html")
 
 @app.get("/s")
 async def stop_robot():
@@ -36,50 +33,42 @@ async def stop_robot():
     return {"status": "stop"}
 
 @app.get("/f")
-async def forward():
-    move(True, True); speed(50)
-    return {"status": "f"}
+async def forward(speed_val: int = Query(default=100, alias="speed")):
+    move(True, True)
+    speed(speed_val)
+    return {"status": "f", "speed": speed_val}
 
 @app.get("/b")
-async def back():
-    move(False, False); speed(50)
-    return {"status": "b"}
+async def back(speed_val: int = Query(default=100, alias="speed")):
+    move(False, False)
+    speed(speed_val)
+    return {"status": "b", "speed": speed_val}
 
 @app.get("/r")
-async def right():
-    move(True, False); speed(50)
-    return {"status": "r"}
+async def right(speed_val: int = Query(default=100, alias="speed")):
+    move(True, False)
+    speed(speed_val)
+    return {"status": "r", "speed": speed_val}
 
 @app.get("/l")
-async def left():
-    move(False, True); speed(50)
-    return {"status": "l"}
+async def left(speed_val: int = Query(default=100, alias="speed")):
+    move(False, True)
+    speed(speed_val)
+    return {"status": "l", "speed": speed_val}
 
-@app.get("/")
-async def joystick_page():
-    return FileResponse("main.html")
-
-# Вариант А: Получение одиночного кадра (Обновлено)
 @app.get("/camera_frame")
 async def get_camera_frame():
     if cam.latest_frame is None:
         return Response(content="Кадр еще не подготовлен нейросетью", status_code=503)
     return Response(content=cam.latest_frame, media_type="image/jpeg", headers=NO_CACHE_HEADERS)
 
-# Вариант Б: Функция-генератор для плавного MJPEG потока видео без перезагрузки страниц
 async def video_stream_generator():
     while True:
         if cam.latest_frame is not None:
-            # Отдаем текущий актуальный кадр
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + cam.latest_frame + b'\r\n')
-
-        # КРИТИЧНО: Пауза должна быть строго внутри цикла while True,
-        # даже если кадр cam.latest_frame временно равен None.
-        # Это позволяет асинхронному движку FastAPI переключаться на другие задачи.
         await asyncio.sleep(0.03)
 
-    # Вариант Б: Эндпоинт для плавной потоковой передачи видео
 @app.get("/video_feed")
 async def video_feed():
     return StreamingResponse(video_stream_generator(), media_type="multipart/x-mixed-replace; boundary=frame")
