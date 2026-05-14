@@ -59,7 +59,7 @@
         <div class="camera-block">
             <div class="viewfinder">
                 <!-- ФИКС: Используем прямой MJPEG-стрим вместо бесконечных GET-запросов через JS -->
-                <img id="robot-frame" src="raspberrypi.local" onerror="this.style.display='none'; document.getElementById('placeholder').style.display='block';" onload="this.style.display='block'; document.getElementById('placeholder').style.display='none';" alt="Кадр нейросети">
+                <img id="robot-frame" src="" onerror="this.style.display='none'; document.getElementById('placeholder').style.display='block';" onload="this.style.display='block'; document.getElementById('placeholder').style.display='none';" alt="Кадр нейросети">
                 <span id="placeholder" style="display: none;">Подключение к камере...</span>
             </div>
             <button class="cam-btn" onclick="restartStream()">🔄 Переподключить поток</button>
@@ -83,6 +83,8 @@
             // Сбрасываем кэш ссылки для перезапуска MJPEG сессии
             img.src = `${ROBOT_BASE_URL}/video_feed?t=${new Date().getTime()}`;
         }
+
+        window.onload = restartStream;
     </script>
 </body>
 </html>
