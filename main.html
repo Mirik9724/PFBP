@@ -58,58 +58,31 @@
 
         <div class="camera-block">
             <div class="viewfinder">
-                <span id="placeholder">Подключение к камере...</span>
-                <!-- ИСПРАВЛЕНИЕ: Чистый тег без кривых путей в src -->
-                <img id="robot-frame" style="display: none;" alt="Кадр нейросети">
+                <!-- ФИКС: Используем прямой MJPEG-стрим вместо бесконечных GET-запросов через JS -->
+                <img id="robot-frame" src="127.0.0" onerror="this.style.display='none'; document.getElementById('placeholder').style.display='block';" onload="this.style.display='block'; document.getElementById('placeholder').style.display='none';" alt="Кадр нейросети">
+                <span id="placeholder" style="display: none;">Подключение к камере...</span>
             </div>
-            <button class="cam-btn" onclick="updateSnapshot()">📸 Обновить сейчас</button>
+            <button class="cam-btn" onclick="restartStream()">🔄 Переподключить поток</button>
         </div>
     </div>
 
     <script>
-        // ИСПРАВЛЕНИЕ: Строго пишем http:// и порт 5000
-        const ROBOT_BASE_URL = 'http://raspberrypi.local:5000';
+        // Если запускаете на малинке, измените на 'http://raspberrypi.local:5000'
+        const ROBOT_BASE_URL = window.location.origin;
 
         function sendCommand(endpoint) {
             fetch(`${ROBOT_BASE_URL}/${endpoint}`).catch(err => console.error(err));
         }
 
-        function updateSnapshot() {
+        function restartStream() {
             const img = document.getElementById('robot-frame');
             const placeholder = document.getElementById('placeholder');
-
-            const cacheBuster = new Date().getTime();
-            const url = `${ROBOT_BASE_URL}/camera_frame?t=${cacheBuster}`;
-
-            fetch(url, { cache: "no-store" })
-                .then(response => {
-                    if (!response.ok) throw new Error('Ошибка сети');
-                    return response.blob();
-                })
-                .then(blob => {
-                    const objectURL = URL.createObjectURL(blob);
-
-                    if (img.src && img.src.startsWith('blob:')) {
-                        URL.revokeObjectURL(img.src);
-                    }
-
-                    img.src = objectURL;
-                    placeholder.style.display = 'none';
-                    img.style.display = 'block';
-                })
-                .catch(err => {
-                    console.error(err);
-                    placeholder.innerText = 'Ошибка получения кадра';
-                    placeholder.style.display = 'block';
-                    img.style.display = 'none';
-                });
+            placeholder.innerText = "Переподключение...";
+            placeholder.style.display = 'block';
+            img.style.display = 'none';
+            // Сбрасываем кэш ссылки для перезапуска MJPEG сессии
+            img.src = `${ROBOT_BASE_URL}/video_feed?t=${new Date().getTime()}`;
         }
-
-        // Опрашиваем буфер малинки каждые 250 мс, ловя новые кадры от cam.py
-        setInterval(updateSnapshot, 250);
-
-        // Первый запуск при открытии страницы
-        window.onload = updateSnapshot;
     </script>
 </body>
 </html>
