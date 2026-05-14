@@ -33,40 +33,40 @@ def check_security(code: str):
             detail="Неверный код безопасности"
         )
 
-@app.get("/set_speed")
-async def set_speed(speed_val: int = Query(default=100, alias="speed")):
-    speed(speed_val)
-    return {"status": "speed_updated", "speed": speed_val}
-
 @app.get("/")
 async def joystick_page():
     return FileResponse("main.html")
 
 @app.get("/s")
-async def stop_robot():
+async def stop_robot(code: str = Query(default="")):
+    check_security(code)
     stop()
     return {"status": "stop"}
 
 @app.get("/f")
-async def forward(speed_val: int = Query(default=100, alias="speed")):
+async def forward(speed_val: int = Query(default=100, alias="speed"),code: str = Query(default="")):
+    check_security(code)
     speed(speed_val)
     move(True, True)
     return {"status": "f", "speed": speed_val}
 
 @app.get("/b")
-async def back(speed_val: int = Query(default=100, alias="speed")):
+async def back(speed_val: int = Query(default=100, alias="speed"),code: str = Query(default="")):
+    check_security(code)
     speed(speed_val)
     move(False, False)
     return {"status": "b", "speed": speed_val}
 
 @app.get("/r")
-async def right(speed_val: int = Query(default=100, alias="speed")):
+async def right(speed_val: int = Query(default=100, alias="speed"),code: str = Query(default="")):
+    check_security(code)
     speed(speed_val)
     move(True, False)
     return {"status": "r", "speed": speed_val}
 
 @app.get("/l")
-async def left(speed_val: int = Query(default=100, alias="speed")):
+async def left(speed_val: int = Query(default=100, alias="speed"),code: str = Query(default="")):
+    check_security(code)
     speed(speed_val)
     move(False, True)
     return {"status": "l", "speed": speed_val}
