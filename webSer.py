@@ -1,8 +1,7 @@
-
-import uvicorn, sys, os
+import uvicorn, sys, os, asyncio
 from fastapi import FastAPI, Response
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, StreamingResponse
 
 sys.path.append(os.path.dirname(__file__))
 from PFBP import *
@@ -60,12 +59,25 @@ async def left():
 async def joystick_page():
     return FileResponse("main.html")
 
-# @app.get("/camera_frame")
-# async def get_camera_frame():
-#     if cam.latest_frame is None:
-#         return Response(content="Кадр еще не подготовлен нейросетью", status_code=503)
-#
-#     return Response(content=cam.latest_frame, media_type="image/jpeg")
+# Вариант А: Получение одиночного кадра (Обновлено)
+@app.get("/camera_frame")
+async def get_camera_frame():
+    if cam.latest_frame is None:
+        return Response(content="Кадр еще не подготовлен нейросетью", status_code=503)
+    return Response(content=cam.latest_frame, media_type="image/jpeg", headers=NO_CACHE_HEADERS)
+
+# Вариант Б: Функция-генератор для плавного MJPEG потока видео без перезагрузки страниц
+async def video_stream_generator():
+    while True:
+        if cam.latest_frame is not None:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + cam.latest_frame + b'\r\n')
+        await asyncio.sleep(0.03) # Ограничение ~30 FPS для разгрузки процессора
+
+# Вариант Б: Эндпоинт для плавной потоковой передачи видео
+@app.get("/video_feed")
+async def video_feed():
+    return StreamingResponse(video_stream_generator(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)
