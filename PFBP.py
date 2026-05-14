@@ -11,20 +11,13 @@ rSp = gp.PWM(6, 100)
 rSp.start(0)
 lSp.start(0)
 
-# Коэффициент скорости для ПРАВОГО мотора (от 0.0 до 1.0)
-# Настройте это значение под себя: 0.85 означает, что правый мотор будет работать на 15% медленнее левого
-RIGHT_MOTOR_CORRECTION = 0.85
-
+RIGHT_MOTOR_CORRECTION = 0
 
 def speed(sp):
-    # Ограничиваем входящее значение от 0 до 100
     base_val = max(0, min(100, sp))
 
-    # Левый мотор работает на полной базовой скорости
     lSp.ChangeDutyCycle(base_val)
 
-    # Скорость правого мотора искусственно занижается на коэффициент
-    # Округляем до целого числа, так как ChangeDutyCycle принимает int/float
     right_val = max(0, min(100, base_val * RIGHT_MOTOR_CORRECTION))
     rSp.ChangeDutyCycle(right_val)
 
