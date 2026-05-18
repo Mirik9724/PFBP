@@ -26,14 +26,14 @@ def speed(sp):
 
 
 def move(Lft, Rgt):
-    if Lft == True:
+    if Lft == False:
         gp.output(17, 1)
         gp.output(27, 0)
     else:
         gp.output(17, 0)
         gp.output(27, 1)
 
-    if Rgt == True:
+    if Rgt == False:
         gp.output(23, 1)
         gp.output(24, 0)
     else:
