@@ -68,7 +68,7 @@ def startCam():
             # class_id = maxLoc[0]
             class_id = maxLoc[0] if isinstance(maxLoc, (tuple, list)) else maxLoc
 
-            if score > 0.5:
+            if score > 0.6:
                 cx, cy, cw, ch = row[0:4]
                 x = int((cx - cw / 2) * (w / 640))
                 y = int((cy - ch / 2) * (h / 640))
@@ -79,7 +79,7 @@ def startCam():
                 confs.append(float(score))
                 class_ids.append(int(class_id))
 
-        indices = cv2.dnn.NMSBoxes(boxes, confs, 0.5, 0.4)
+        indices = cv2.dnn.NMSBoxes(boxes, confs, 0.5, 0.6)
 
         if len(indices) > 0:
             for i in indices.flatten():
