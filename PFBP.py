@@ -12,7 +12,7 @@ rSp.start(0)
 lSp.start(0)
 
 lCof = 1.0
-rCof = 0.9
+rCof = 1.0
 
 def speed(sp):
     base_val = max(0, min(100, sp))
