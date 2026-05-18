@@ -284,13 +284,13 @@
             if (angle < 0) angle += 360;
 
             if (angle >= 45 && angle < 135) {
-                sendRobotCommand('l'); // Вперед
+                sendRobotCommand('f'); // Вперед
             } else if (angle >= 135 && angle < 225) {
-                sendRobotCommand('b'); // Лево
+                sendRobotCommand('l'); // Лево
             } else if (angle >= 225 && angle < 315) {
-                sendRobotCommand('r'); // Назад
+                sendRobotCommand('b'); // Назад
             } else {
-                sendRobotCommand('f'); // Право
+                sendRobotCommand('r'); // Право
             }
         }
 
