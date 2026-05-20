@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
-import sys
-import time
+import sys,time, os
 
-net = cv2.dnn.readNetFromONNX("yolov8n-seg.onnx")
+base_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(base_dir, "yolov8n-seg.onnx")
+net = cv2.dnn.readNetFromONNX(model_path)
+
 latest_frame = None
 demoMode = False
 
